@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Inova Fit - Portal</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0 15px;
+      background-color: #f0f0f0;
+      color: #222;
+    }
+
+    body.dark-mode {
+      background-color: #121212;
+      color: white;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: #00c896;
+      padding: 10px 20px;
+      color: white;
+    }
+
+    header h1 {
+      margin: 0;
+    }
+
+    button {
+      cursor: pointer;
+      padding: 6px 12px;
+      border: none;
+      border-radius: 4px;
+      background-color: #007b5e;
+      color: white;
+      font-size: 14px;
+      margin-left: 10px;
+    }
+
+    button:hover {
+      background-color: #005a40;
+    }
+
+    main {
+      margin-top: 20px;
+    }
+
+    section {
+      background-color: white;
+      border-radius: 6px;
+      padding: 15px;
+      margin-bottom: 20px;
+      box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+    }
+
+    input[type="text"],
+    input[type="password"],
+    input[type="date"] {
+      width: 100%;
+      padding: 6px 8px;
+      margin: 6px 0 12px 0;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+
+    label {
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    ul {
+      padding-left: 20px;
+    }
+
+    .toggle-dark {
+      background-color: #004d40;
+      position: relative;
+      font-size: 14px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    /* Login page */
+    #loginPage {
+      max-width: 400px;
+      margin: 50px auto;
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px #ccc;
+    }
+
+    #loginPage h2 {
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    /* Painel */
+    #painelGestora,
+    #painelAluno {
+      max-width: 900px;
+      margin: auto;
+    }
+
+    /* Form submit button */
+    form button[type="submit"] {
+      background-color: #00c896;
+    }
+
+    form button[type="submit"]:hover {
+      background-color: #009f70;
+    }
+
+    /* Mensagens */
+    #mensagemLogin {
+      color: red;
+      font-weight: bold;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Login -->
+  <div id="loginPage">
+    <h2>Inova Fit - Login</h2>
+    <div id="mensagemLogin"></div>
+    <form id="formLogin">
+      <label for="usuarioLogin">Usuário:</label>
+      <input type="text" id="usuarioLogin" required />
+      <label for="senhaLogin">Senha:</label>
+      <input type="password" id="senhaLogin" required />
+      <label for="tipoLogin">Tipo de Usuário:</label>
+      <select id="tipoLogin" required>
+        <option value="aluno">Aluno</option>
+        <option value="gestora">Gestora</option>
+      </select>
+      <button type="submit">Entrar</button>
+    </form>
+  </div>
+
+  <!-- Painel Gestora -->
+  <main id="painelGestora" class="hidden">
+    <header>
+      <h1>Inova Fit - Painel da Gestora</h1>
+      <div>
+        <button onclick="logout()">Sair</button>
+        <button class="toggle-dark" onclick="toggleDarkMode()">Modo Escuro</button>
+      </div>
+    </header>
+
+    <section>
+      <h2>Lista de Clientes</h2>
+      <input type="text" id="buscaCliente" placeholder="Buscar por nome..." oninput="filtrarClientes()" />
+      <ul id="listaClientes"></ul>
+    </section>
+
+    <section>
+      <h2>Histórico de Presença</h2>
+      <label for="dataPresenca">Selecionar Data:</label>
+      <input type="date" id="dataPresenca" />
+      <button onclick="verPresencas()">Ver Presenças</button>
+      <div id="historicoPresenca"></div>
+    </section>
+
+    <section>
+      <h2>Registro de Matrículas</h2>
+      <form id="formMatricula">
+        <input type="text" placeholder="Nome do cliente" id="nomeMatricula" required />
+        <label>Data de Entrada:</label>
+        <input type="date" id="dataEntrada" required />
+        <label>Data de Vencimento:</label>
+        <input type="date" id="dataVencimento" required />
+        <button type="submit">Registrar</button>
+      </form>
+      <ul id="listaMatriculas"></ul>
+    </section>
+
+    <section>
+      <h2>Cadastrar Cliente (com senha)</h2>
+      <form id="formCadastroCliente">
+        <label for="usuarioCliente">Usuário:</label><br />
+        <input type="text" id="usuarioCliente" required /><br />
+        <label for="senhaCliente">Senha:</label><br />
+        <input type="password" id="senhaCliente" required /><br /><br />
+        <button type="submit">Cadastrar Cliente</button>
+      </form>
+      <hr />
+    </section>
+
+    <section>
+      <h2>Exportar Dados</h2>
+      <button onclick="exportarDados()">Exportar para CSV</button>
+    </section>
+
+    <section>
+      <h2>Estatísticas e Alertas</h2>
+      <canvas id="graficoClientes"></canvas>
+      <div id="alertas">
+        <p><strong>Alertas:</strong></p>
+        <ul>
+          <li>João Silva - Inativo há 15 dias</li>
+          <li>Fernanda Lima - Plano vence amanhã</li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <!-- Painel Aluno -->
+  <main id="painelAluno" class="hidden">
+    <header>
+      <h1>Inova Fit - Painel do Aluno</h1>
+      <div>
+        <button onclick="logout()">Sair</button>
+        <button class="toggle-dark" onclick="toggleDarkMode()">Modo Escuro</button>
+      </div>
+    </header>
+
+    <section>
+      <h2>Plano de Treino</h2>
+      <ul id="planoTreinoAluno"></ul>
+    </section>
+
+    <section>
+      <h2>Avaliação Física</h2>
+      <p id="avaliacaoFisica"></p>
+    </section>
+
+    <section>
+      <h2>Gráficos de Progresso e IMC</h2>
+      <canvas id="graficoProgresso"></canvas>
+    </section>
+
+    <section>
+      <h2>Alertas</h2>
+      <ul id="alertasAluno"></ul>
+    </section>
+
+    <section>
+      <h2>Registro de Frequência Automático</h2>
+      <button onclick="registrarFrequencia()">Registrar Frequência Hoje</button>
+      <p id="msgFrequencia"></p>
+    </section>
+
+    <section>
+      <h2>Mensagens Diretas com a Gestora</h2>
+      <textarea id="mensagemAluno" placeholder="Escreva sua mensagem aqui..." rows="3"></textarea>
+      <button onclick="enviarMensagem()">Enviar Mensagem</button>
+      <div id="mensagensRecebidas"></div>
+    </section>
+
+    <section>
+      <h2>Agendamento de Treinos</h2>
+      <form id="formAgendamento">
+        <label for="dataTreino">Data do treino:</label>
+        <input type="date" id="dataTreino" required />
+        <button type="submit">Agendar</button>
+      </form>
+      <ul id="listaAgendamentos"></ul>
+    </section>
+  </main>
+
+  <script>
+    // Dados fake iniciais
+    let usuarios = [
+      { usuario: "gestora", senha: "1234", tipo: "gestora" },
+      { usuario: "maria", senha: "maria123", tipo: "aluno" },
+      { usuario: "joao", senha: "joao123", tipo: "aluno" },
+    ];
+
+    let clientes = ["Maria Oliveira", "João Silva", "Carla Souza", "Pedro Martins", "Fernanda Lima"];
+
+    // Frequências: objeto { usuario: [ datas ] }
+    let frequencias = {
+      maria: ["2025-05-10", "2025-05-15"],
+      joao: ["2025-05-12"],
+    };
+
+    // Mensagens para alunos
+    let mensagens = {
+      maria: [],
+      joao: [],
+    };
+
+    // Matrículas
+    let matriculas = [
+      { nome: "Maria Oliveira", entrada: "2025-05-01", vencimento: "2025-06-01" },
+      { nome: "João Silva", entrada: "2025-05-10", vencimento: "2025-06-10" },
+    ];
+
+    // Planos de treino para alunos (exemplo)
+    const planosTreino = {
+      maria: [
+        "Segunda: Peito e tríceps",
+        "Terça: Costas e bíceps",
+        "Quarta: Pernas",
+        "Quinta: Ombro",
+        "Sexta: Abdômen",
+      ],
+      joao: [
+        "Segunda: Costas",
+        "Terça: Peito",
+        "Quarta: Pernas",
+        "Quinta: Bíceps",
+        "Sexta: Abdômen",
+      ],
+    };
+
+    // Avaliação física fake
+    const avaliacoesFisicas = {
+      maria: { peso: 70, altura: 1.65, imc: 25.7 },
+      joao: { peso: 80, altura: 1.78, imc: 25.2 },
+    };
+
+    // Agendamentos
+    let agendamentos = {
+      maria: [],
+      joao: [],
+    };
+
+    // Usuário logado
+    let usuarioLogado = null;
+
+    // ---------- Login ----------
+    const loginPage = document.getElementById("loginPage");
+    const painelGestora = document.getElementById("painelGestora");
+    const painelAluno = document.getElementById("painelAluno");
+    const mensagemLogin = document.getElementById("mensagemLogin");
+
+    document.getElementById("formLogin").addEventListener("submit", function (e) {
+      e.preventDefault();
+      const usuario = document.getElementById("usuarioLogin").value.trim().toLowerCase();
+      const senha = document.getElementById("senhaLogin").value;
+      const tipo = document.getElementById("tipoLogin").value;
+
+      const usuarioEncontrado = usuarios.find(
+        (u) => u.usuario.toLowerCase() === usuario && u.senha === senha && u.tipo === tipo
+      );
+
+      if (usuarioEncontrado) {
+        usuarioLogado = usuarioEncontrado.usuario;
+        mensagemLogin.textContent = "";
+        loginPage.classList.add("hidden");
+        if (tipo === "gestora") {
+          painelGestora.classList.remove("hidden");
+          carregarClientes();
+          carregarMatriculas();
+          criarGraficoClientes();
+        } else {
+          painelAluno.classList.remove("hidden");
+          carregarPainelAluno();
+          criarGraficoProgresso();
+          carregarMensagens();
+          carregarAgendamentos();
+        }
+      } else {
+        mensagemLogin.textContent = "Usuário, senha ou tipo incorretos.";
+      }
+    });
+
+    function logout() {
+      usuarioLogado = null;
+      loginPage.classList.remove("hidden");
+      painelGestora.classList.add("hidden");
+      painelAluno.classList.add("hidden");
+      document.getElementById("formLogin").reset();
+    }
+
+    // --------- Modo Escuro ----------
+    function toggleDarkMode() {
+      document.body.classList.toggle("dark-mode");
+    }
+
+    // --------- Funções Gestora ----------
+
+    // Atualizar lista de clientes
+    function carregarClientes() {
+      const ul = document.getElementById("listaClientes");
+      ul.innerHTML = "";
+      // Pega só os usuários do tipo aluno para listar
+      usuarios
+        .filter((u) => u.tipo === "aluno")
+        .forEach((cliente) => {
+          const li = document.createElement("li");
+          li.textContent = cliente.usuario;
+          ul.appendChild(li);
+        });
+    }
+
+    // Busca na lista de clientes
+    function filtrarClientes() {
+      const filtro = document.getElementById("buscaCliente").value.toLowerCase();
+      const lista = document.getElementById("listaClientes").getElementsByTagName("li");
+      for (let cliente of lista) {
+        cliente.style.display = cliente.textContent.toLowerCase().includes(filtro) ? "" : "none";
+      }
+    }
+
+    // Histórico de presenças fake
+    function verPresencas() {
+      const data = document.getElementById("dataPresenca").value;
+      const div = document.getElementById("historicoPresenca");
+      if (!data) {
+        div.innerHTML = "<p>Selecione uma data.</p>";
+        return;
+      }
+      let presentes = [];
+      for (let u of usuarios) {
+        if (u.tipo === "aluno" && frequencias[u.usuario] && frequencias[u.usuario].includes(data)) {
+          presentes.push(u.usuario);
+        }
+      }
+      if (presentes.length === 0) {
+        div.innerHTML = `<p>Nenhuma presença registrada em ${data}.</p>`;
+      } else {
+        div.innerHTML = `<p>Presentes em ${data}: ${presentes.join(", ")}</p>`;
+      }
+    }
+
+    // Registro de matrículas
+    document.getElementById("formMatricula").addEventListener("submit", function (e) {
+      e.preventDefault();
+      const nome = document.getElementById("nomeMatricula").value.trim();
+      const entrada = document.getElementById("dataEntrada").value;
+      const vencimento = document.getElementById("dataVencimento").value;
+
+      if (!nome || !entrada || !vencimento) return alert("Preencha todos os campos.");
+
+      matriculas.push({ nome, entrada, vencimento });
+      carregarMatriculas();
+      alert("Matrícula registrada com sucesso!");
+      e.target.reset();
+    });
+
+    function carregarMatriculas() {
+      const ul = document.getElementById("listaMatriculas");
+      ul.innerHTML = "";
+      matriculas.forEach((m) => {
+        const li = document.createElement("li");
+        li.textContent = `${m.nome} - Entrada: ${m.entrada} - Vencimento: ${m.vencimento}`;
+        ul.appendChild(li);
+      });
+    }
+
+    // Cadastrar cliente (com senha)
+    document.getElementById("formCadastroCliente").addEventListener("submit", function (e) {
+      e.preventDefault();
+      const usuario = document.getElementById("usuarioCliente").value.trim().toLowerCase();
+      const senha = document.getElementById("senhaCliente").value;
+
+      if (usuarios.some((u) => u.usuario === usuario)) {
+        alert("Usuário já existe.");
+        return;
+      }
+
+      usuarios.push({ usuario, senha, tipo: "aluno" });
+      frequencias[usuario] = [];
+      mensagens[usuario] = [];
+      agendamentos[usuario] = [];
+      clientes.push(usuario);
+
+      carregarClientes();
+      alert("Cliente cadastrado com sucesso!");
+      e.target.reset();
+    });
+
+    // Exportar dados para CSV
+    function exportarDados() {
+      let csv = "Usuário,Tipo\n";
+      usuarios.forEach((u) => {
+        csv += `${u.usuario},${u.tipo}\n`;
+      });
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "usuarios.csv";
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // Criar gráfico clientes (exemplo fake)
+    function criarGraficoClientes() {
+      const ctx = document.getElementById("graficoClientes").getContext("2d");
+      new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: ["Janeiro", "Fevereiro", "Março", "Abril", "Maio"],
+          datasets: [
+            {
+              label: "Novos Clientes",
+              data: [10, 15, 8, 20, 12],
+              backgroundColor: "#00c896",
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: { beginAtZero: true },
+          },
+        },
+      });
+    }
+
+    // --------- Funções Aluno ----------
+    function carregarPainelAluno() {
+      // Plano de treino
+      const planoUl = document.getElementById("planoTreinoAluno");
+      planoUl.innerHTML = "";
+      const plano = planosTreino[usuarioLogado] || ["Plano de treino não disponível."];
+      plano.forEach((item) => {
+        const li = document.createElement("li");
+        li.textContent = item;
+        planoUl.appendChild(li);
+      });
+
+      // Avaliação física
+      const avaliacao = avaliacoesFisicas[usuarioLogado];
+      if (avaliacao) {
+        document.getElementById("avaliacaoFisica").textContent = `Peso: ${avaliacao.peso}kg, Altura: ${avaliacao.altura}m, IMC: ${avaliacao.imc.toFixed(1)}`;
+      } else {
+        document.getElementById("avaliacaoFisica").textContent = "Avaliação não disponível.";
+      }
+
+      // Alertas
+      const alertasAluno = document.getElementById("alertasAluno");
+      alertasAluno.innerHTML = "";
+      // Exemplo alertas
+      let alertasFake = ["Seu plano vence em 3 dias", "Não esqueça de registrar sua frequência"];
+      alertasFake.forEach((alerta) => {
+        const li = document.createElement("li");
+        li.textContent = alerta;
+        alertasAluno.appendChild(li);
+      });
+    }
+
+    function criarGraficoProgresso() {
+      const ctx = document.getElementById("graficoProgresso").getContext("2d");
+      new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: ["Março", "Abril", "Maio"],
+          datasets: [
+            {
+              label: "IMC",
+              data: [26, 25.8, 25.7],
+              borderColor: "#007b5e",
+              backgroundColor: "rgba(0,123,94,0.3)",
+              fill: true,
+              tension: 0.3,
+            },
+          ],
+        },
+        options: { responsive: true, scales: { y: { beginAtZero: false } } },
+      });
+    }
+
+    // Registrar frequência do dia
+    function registrarFrequencia() {
+      const hoje = new Date().toISOString().slice(0, 10);
+      if (!frequencias[usuarioLogado]) frequencias[usuarioLogado] = [];
+      if (frequencias[usuarioLogado].includes(hoje)) {
+        document.getElementById("msgFrequencia").textContent = "Frequência já registrada para hoje.";
+      } else {
+        frequencias[usuarioLogado].push(hoje);
+        document.getElementById("msgFrequencia").textContent = "Frequência registrada com sucesso!";
+      }
+    }
+
+    // Mensagens diretas
+    function enviarMensagem() {
+      const texto = document.getElementById("mensagemAluno").value.trim();
+      if (!texto) return alert("Escreva uma mensagem.");
+
+      if (!mensagens[usuarioLogado]) mensagens[usuarioLogado] = [];
+      mensagens[usuarioLogado].push(texto);
+      document.getElementById("mensagemAluno").value = "";
+      carregarMensagens();
+    }
+
+    function carregarMensagens() {
+      const div = document.getElementById("mensagensRecebidas");
+      div.innerHTML = "<strong>Suas mensagens:</strong><br/>";
+      if (mensagens[usuarioLogado] && mensagens[usuarioLogado].length > 0) {
+        mensagens[usuarioLogado].forEach((msg, i) => {
+          const p = document.createElement("p");
+          p.textContent = `${i + 1}: ${msg}`;
+          div.appendChild(p);
+        });
+      } else {
+        div.innerHTML += "<p>Sem mensagens.</p>";
+      }
+    }
+
+    // Agendamento de treinos
+    document.getElementById("formAgendamento").addEventListener("submit", function (e) {
+      e.preventDefault();
+      const data = document.getElementById("dataTreino").value;
+      if (!data) return alert("Escolha uma data.");
+
+      if (!agendamentos[usuarioLogado]) agendamentos[usuarioLogado] = [];
+      agendamentos[usuarioLogado].push(data);
+      carregarAgendamentos();
+      alert("Treino agendado com sucesso!");
+      e.target.reset();
+    });
+
+    function carregarAgendamentos() {
+      const ul = document.getElementById("listaAgendamentos");
+      ul.innerHTML = "";
+      if (!agendamentos[usuarioLogado] || agendamentos[usuarioLogado].length === 0) {
+        ul.innerHTML = "<li>Sem agendamentos.</li>";
+        return;
+      }
+      agendamentos[usuarioLogado].forEach((data) => {
+        const li = document.createElement("li");
+        li.textContent = data;
+        ul.appendChild(li);
+      });
+    }
+  </script>
+</body>
+
+</html>
